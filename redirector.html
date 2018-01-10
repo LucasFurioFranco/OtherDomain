@@ -1,0 +1,106 @@
+<html>
+
+<head>
+  <title>Redirector</title>
+  <script>
+    function URL(url) {
+      this.protocol = undefined;
+      this.hostname = undefined;
+      this.path = undefined;
+      this.query = undefined;
+      this.fragment = undefined;
+      if (/^https?:\/\//.test(url)) {
+        this.protocol = url.match(/^(https?)/)[1];
+        url = url.substring(this.protocol.length + 3);
+      }
+      if (/\#/.test(url)) {
+        this.fragment = url.match(/#(.*)/)[1];
+        url = url.split('#')[0];
+      }
+      if (/\?/.test(url)) {
+        this.query = url.split('?')[1];
+        url = url.split('?')[0];
+      }
+      if (!/\//.test(url)) {
+        this.path = '/';
+        this.hostname = url;
+        url = '';
+      } else {
+        this.path = url.match(/(\/.*)/)[1];
+        this.hostname = url.split('/')[0];
+        url = '';
+      }
+      this.update();
+    }
+    URL.prototype.update = function() {
+      this.href = (this.protocol ? this.protocol + '://' : '') + this.hostname + this.path + (this.query ? '?' + this.query : '') + (this.fragment ? '#' + this.fragment : '');
+      this.origin = this.protocol ? this.protocol + '://' + this.hostname : undefined;
+    };
+    URL.prototype.addQuery = function(param, value) {
+      if (param && value) {
+        var queryObj = {};
+        var queryArr = this.query ? this.query.split('&') : [];
+        for (var i = 0, len = queryArr.length; i < len; i++) {
+          queryObj[queryArr[i].split('=')[0]] = queryArr[i].split('=')[1];
+        }
+        queryObj[param] = encodeURIComponent(value);
+        this.query = '';
+        for (var key in queryObj) {
+          this.query += key + '=' + queryObj[key] + '&';
+        }
+        this.query = this.query.replace(/&$/, '');
+        this.update();
+      }
+    };
+    URL.prototype.getQuery = function(param) {
+      if (param && this.query) {
+        var queryArr = this.query.split('&');
+        for (var i = 0, len = queryArr.length; i < len; i++) {
+          if (queryArr[i].split('=')[0] === param) {
+            return decodeURIComponent(queryArr[i].split('=')[1]);
+          }
+        }
+        return undefined;
+      } else {
+        return undefined;
+      }
+    };
+    URL.prototype.removeQuery = function(param) {
+      if (param && this.query) {
+        var queryObj = {};
+        var queryArr = this.query.split('&');
+        for (var i = 0, len = queryArr.length; i < len; i++) {
+          queryObj[queryArr[i].split('=')[0]] = queryArr[i].split('=')[1];
+        }
+        delete queryObj[param];
+        this.query = '';
+        for (var key in queryObj) {
+          this.query += key + '=' + queryObj[key] + '&';
+        }
+        this.query = this.query.replace(/&$/, '');
+        if (this.query === '') {
+          this.query = undefined;
+        }
+        this.update();
+      }
+    };
+    URL.prototype.setFragment = function(param) {
+      if (param) {
+        this.fragment = param;
+        this.update();
+      }
+    };
+    URL.prototype.removeFragment = function() {
+      this.fragment = undefined;
+      this.update();
+    };
+    var url = new URL(document.URL);
+    window.location = decodeURIComponent(url.getQuery("goto"));
+  </script>
+  <meta charset="UTF-8">
+</head>
+
+<body>
+</body>
+
+</html>
